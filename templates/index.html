@@ -3,68 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Traffic Automation</title>
+    <title>Web Traffic Automation with Proxy Rotation</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Web Traffic Automation</h1>
+        <h1 class="text-3xl font-bold text-center mb-2 text-gray-800">🚀 Web Traffic Automation</h1>
+        <p class="text-center text-gray-600 mb-8">With Proxy Rotation & Real-time Monitoring</p>
         
-        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
-            <form id="trafficForm" class="space-y-4">
-                <div>
-                    <label for="url" class="block text-sm font-medium text-gray-700">Target URL</label>
-                    <input type="url" id="url" name="url" required
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="https://example.com">
-                </div>
-                
-                <div>
-                    <label for="sessionId" class="block text-sm font-medium text-gray-700">Session ID (optional)</label>
-                    <input type="text" id="sessionId" name="sessionId"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="default">
-                </div>
-                
-                <button type="submit"
-                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Start Traffic Automation
-                </button>
-            </form>
-            
-            <div id="status" class="mt-6 hidden">
-                <h3 class="text-lg font-medium text-gray-900">Session Status</h3>
-                <div class="mt-2 p-4 bg-gray-50 rounded-md">
-                    <pre id="statusContent" class="text-sm"></pre>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Stats Cards -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-2">📊 Session Summary</h3>
+                <div id="statsContainer" class="space-y-2">
+                    <div class="flex justify-between">
+                        <span>Active:</span>
+                        <span id="activeCount" class="font-bold">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Completed:</span>
+                        <span id="completedCount" class="font-bold text-green-600">0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Errors:</span>
+                        <span id="errorCount" class="font-bold text-red-600">0</span>
+                    </div>
                 </div>
             </div>
-            
-            <div id="error" class="mt-4 hidden">
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                    <span id="errorMessage"></span>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-2">🔧 Quick Actions</h3>
+                <div class="space-y-2">
+                    <button onclick="loadMonitor()" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+                        Refresh Monitor
+                    </button>
+                    <button onclick="clearCompleted()" class="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600">
+                        Clear Completed
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-2">ℹ️ Features</h3>
+                <ul class="text-sm space-y-1">
+                    <li>✅ Multiple Proxy Sources</li>
+                    <li>✅ User Agent Rotation</li>
+                    <li>✅ Real-time Logs</li>
+                    <li>✅ Session Monitoring</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Control Panel -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">🎮 Control Panel</h2>
+                
+                <form id="trafficForm" class="space-y-4">
+                    <div>
+                        <label for="url" class="block text-sm font-medium text-gray-700">Target URL *</label>
+                        <input type="url" id="url" name="url" required
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="https://example.com or example.com">
+                    </div>
+                    
+                    <div>
+                        <label for="sessionId" class="block text-sm font-medium text-gray-700">Session ID (optional)</label>
+                        <input type="text" id="sessionId" name="sessionId"
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="auto-generated if empty">
+                    </div>
+                    
+                    <button type="submit" id="submitBtn"
+                            class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        Start Traffic Automation
+                    </button>
+                </form>
+                
+                <div id="status" class="mt-6 hidden">
+                    <h3 class="text-lg font-medium text-gray-900">Session Status</h3>
+                    <div class="mt-2 p-4 bg-gray-50 rounded-md">
+                        <pre id="statusContent" class="text-sm whitespace-pre-wrap"></pre>
+                    </div>
+                </div>
+                
+                <div id="error" class="mt-4 hidden">
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        <span id="errorMessage"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs & Monitoring -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">📋 Session Logs</h2>
+                
+                <div class="mb-4">
+                    <label for="sessionSelect" class="block text-sm font-medium text-gray-700">Select Session:</label>
+                    <select id="sessionSelect" onchange="loadSessionLogs()"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Select a session...</option>
+                    </select>
+                </div>
+                
+                <div class="bg-gray-900 text-green-400 p-4 rounded-md h-64 overflow-y-auto">
+                    <pre id="logContent" class="text-sm whitespace-pre-wrap">Select a session to view logs...</pre>
+                </div>
+                
+                <div class="mt-4 flex space-x-2">
+                    <button onclick="refreshLogs()" class="flex-1 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
+                        Refresh Logs
+                    </button>
+                    <button onclick="downloadLogs()" class="flex-1 bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">
+                        Download Logs
+                    </button>
                 </div>
             </div>
         </div>
-        
-        <div class="max-w-2xl mx-auto mt-8 bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold mb-4">Features</h2>
-            <ul class="list-disc list-inside space-y-2 text-gray-700">
-                <li>✅ Automatic proxy rotation each session</li>
-                <li>✅ Automatic user agent rotation</li>
-                <li>✅ Data leak detection</li>
-                <li>✅ Smart scrolling behavior</li>
-                <li>✅ Post selection and interaction</li>
-                <li>✅ Multiple iterations</li>
-            </ul>
+
+        <!-- Recent Sessions -->
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">🕐 Recent Sessions</h2>
+            <div id="recentSessions" class="space-y-2">
+                <!-- Will be populated by JavaScript -->
+            </div>
         </div>
     </div>
 
     <script>
+        let currentSessionId = '';
+        
+        // Load monitor data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMonitor();
+            loadSessionsList();
+            setInterval(loadMonitor, 10000); // Refresh every 10 seconds
+        });
+
+        // Form submission
         document.getElementById('trafficForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+            await startTraffic();
+        });
+
+        async function startTraffic() {
             const url = document.getElementById('url').value;
-            const sessionId = document.getElementById('sessionId').value || 'default';
+            const sessionId = document.getElementById('sessionId').value || `session_${Date.now()}`;
+            const submitBtn = document.getElementById('submitBtn');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Starting...';
             
             try {
                 const response = await fetch('/start_traffic', {
@@ -84,47 +173,161 @@
                     document.getElementById('error').classList.add('hidden');
                     document.getElementById('status').classList.remove('hidden');
                     document.getElementById('statusContent').textContent = 
-                        `Session started: ${sessionId}\nURL: ${url}\nStatus: Running...`;
+                        `Session started: ${sessionId}\nURL: ${url}\nStatus: Running...\n\nCheck logs for real-time progress.`;
                     
-                    // Poll for status updates
-                    pollStatus(sessionId);
+                    currentSessionId = sessionId;
+                    loadSessionsList();
+                    loadMonitor();
+                    
+                    // Auto-select the new session in logs
+                    document.getElementById('sessionSelect').value = sessionId;
+                    loadSessionLogs();
                 } else {
                     showError(data.error);
                 }
             } catch (error) {
                 showError('Network error: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Start Traffic Automation';
             }
-        });
-        
-        async function pollStatus(sessionId) {
-            const interval = setInterval(async () => {
-                try {
-                    const response = await fetch(`/status/${sessionId}`);
-                    if (response.ok) {
-                        const status = await response.json();
-                        document.getElementById('statusContent').textContent = 
-                            JSON.stringify(status, null, 2);
-                        
-                        if (status.status && 
-                           (status.status.includes('completed') || 
-                            status.status.includes('error'))) {
-                            clearInterval(interval);
-                        }
-                    } else {
-                        clearInterval(interval);
-                        document.getElementById('statusContent').textContent += 
-                            '\nSession ended or not found';
-                    }
-                } catch (error) {
-                    console.error('Status polling error:', error);
-                }
-            }, 2000);
         }
-        
+
+        async function loadMonitor() {
+            try {
+                const response = await fetch('/monitor');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Update stats
+                    document.getElementById('activeCount').textContent = data.summary.active_sessions;
+                    document.getElementById('completedCount').textContent = data.summary.completed_sessions;
+                    document.getElementById('errorCount').textContent = data.summary.error_sessions;
+                    
+                    // Update recent sessions
+                    const recentContainer = document.getElementById('recentSessions');
+                    recentContainer.innerHTML = data.recent_sessions.map(session => `
+                        <div class="flex justify-between items-center p-3 border rounded-lg ${getStatusColor(session.status)}">
+                            <div class="flex-1">
+                                <div class="font-medium">${session.session_id}</div>
+                                <div class="text-sm text-gray-600">Started: ${new Date(session.start_time).toLocaleString()}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-medium ${getStatusTextColor(session.status)}">${session.status}</div>
+                                ${session.end_time ? 
+                                    `<div class="text-sm text-gray-600">Ended: ${new Date(session.end_time).toLocaleString()}</div>` : 
+                                    '<div class="text-sm text-green-600">Active</div>'
+                                }
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Monitor load error:', error);
+            }
+        }
+
+        async function loadSessionsList() {
+            try {
+                const response = await fetch('/sessions');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const select = document.getElementById('sessionSelect');
+                    // Store current selection
+                    const currentValue = select.value;
+                    
+                    // Clear options
+                    select.innerHTML = '<option value="">Select a session...</option>';
+                    
+                    // Add active sessions first
+                    Object.keys(data.active_sessions).forEach(sessionId => {
+                        const option = document.createElement('option');
+                        option.value = sessionId;
+                        option.textContent = `${sessionId} (Active)`;
+                        select.appendChild(option);
+                    });
+                    
+                    // Restore selection if possible
+                    if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
+                        select.value = currentValue;
+                    }
+                }
+            } catch (error) {
+                console.error('Sessions load error:', error);
+            }
+        }
+
+        async function loadSessionLogs() {
+            const sessionId = document.getElementById('sessionSelect').value;
+            if (!sessionId) return;
+            
+            try {
+                const response = await fetch(`/logs/${sessionId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('logContent').textContent = data.logs || 'No logs available';
+                    // Auto-scroll to bottom
+                    const logContainer = document.querySelector('#logContent');
+                    logContainer.scrollTop = logContainer.scrollHeight;
+                } else {
+                    document.getElementById('logContent').textContent = 'Error loading logs';
+                }
+            } catch (error) {
+                document.getElementById('logContent').textContent = 'Network error loading logs';
+            }
+        }
+
+        async function refreshLogs() {
+            await loadSessionLogs();
+        }
+
+        async function downloadLogs() {
+            const sessionId = document.getElementById('sessionSelect').value;
+            if (!sessionId) {
+                alert('Please select a session first');
+                return;
+            }
+            
+            window.open(`/logs/${sessionId}/download`, '_blank');
+        }
+
+        async function clearCompleted() {
+            try {
+                const response = await fetch('/clear_completed', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert(`Cleared ${data.cleared_sessions.length} completed sessions`);
+                    loadMonitor();
+                    loadSessionsList();
+                }
+            } catch (error) {
+                alert('Error clearing sessions');
+            }
+        }
+
         function showError(message) {
             document.getElementById('errorMessage').textContent = message;
             document.getElementById('error').classList.remove('hidden');
         }
+
+        function getStatusColor(status) {
+            if (status.includes('error')) return 'bg-red-50 border-red-200';
+            if (status === 'completed') return 'bg-green-50 border-green-200';
+            if (status === 'running') return 'bg-blue-50 border-blue-200';
+            return 'bg-gray-50 border-gray-200';
+        }
+
+        function getStatusTextColor(status) {
+            if (status.includes('error')) return 'text-red-600';
+            if (status === 'completed') return 'text-green-600';
+            if (status === 'running') return 'text-blue-600';
+            return 'text-gray-600';
+        }
     </script>
 </body>
-  </html>
+    </html>
