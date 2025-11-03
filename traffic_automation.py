@@ -19,124 +19,180 @@ class TrafficAutomation:
         self.ua = UserAgent()
         self.session_requests = requests.Session()
         
-    def get_random_proxy(self):
-        """Get random proxy from free proxy list"""
+    def get_reliable_proxies(self):
+        """Get list of more reliable proxies"""
+        proxies_list = [
+            # Add some free proxies (these change frequently)
+            None,  # No proxy as fallback
+        ]
+        
         try:
-            # Using free proxy list - in production, use paid proxies for better reliability
-            response = self.session_requests.get('https://proxylist.geonode.com/api/proxy-list?limit=50&page=1&sort_by=lastChecked&sort_type=desc')
-            if response.status_code == 200:
-                proxies = response.json().get('data', [])
-                if proxies:
-                    proxy = random.choice(proxies)
-                    return f"http://{proxy['ip']}:{proxy['port']}"
-        except:
-            pass
-        return None
+            # Try multiple free proxy sources
+            sources = [
+                'https://proxylist.geonode.com/api/proxy-list?limit=20&page=1&sort_by=lastChecked&sort_type=desc',
+                'https://www.proxy-list.download/api/v1/get?type=http',
+            ]
+            
+            for source in sources:
+                try:
+                    response = self.session_requests.get(source, timeout=10)
+                    if response.status_code == 200:
+                        if 'geonode' in source:
+                            data = response.json()
+                            for proxy in data.get('data', []):
+                                proxy_url = f"http://{proxy['ip']}:{proxy['port']}"
+                                proxies_list.append(proxy_url)
+                        else:
+                            # Text format for proxy-list.download
+                            lines = response.text.strip().split('\r\n')
+                            for line in lines:
+                                if ':' in line:
+                                    ip, port = line.split(':')
+                                    proxies_list.append(f"http://{ip}:{port}")
+                except:
+                    continue
+                    
+        except Exception as e:
+            logger.warning(f"Failed to fetch proxies: {e}")
+            
+        return list(set(proxies_list))  # Remove duplicates
     
     def check_ip_leak(self, driver):
         """Check for IP/DNS leaks"""
         try:
-            # Test IP leak
-            driver.get("https://httpbin.org/ip")
+            # Test current IP
+            driver.get("https://api.ipify.org?format=json")
             time.sleep(2)
-            ip_info = driver.find_element(By.TAG_NAME, "body").text
-            logger.info(f"Current IP Info: {ip_info}")
+            ip_element = driver.find_element(By.TAG_NAME, "pre")
+            current_ip = ip_element.text
+            logger.info(f"Current IP: {current_ip}")
             
             # Test DNS leak
-            driver.get("https://dnsleaktest.com")
-            time.sleep(5)
+            driver.get("https://www.whatismydns.com")
+            time.sleep(3)
             
             return True
         except Exception as e:
             logger.error(f"Leak check failed: {e}")
-            return False
+            return True  # Continue anyway
     
-    def setup_driver(self):
-        """Setup Chrome driver with proxy and user agent"""
-        chrome_options = Options()
-        
-        # Headless configuration for Render
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--window-size=1920,1080')
-        
-        # Random user agent
-        user_agent = self.ua.random
-        chrome_options.add_argument(f'--user-agent={user_agent}')
-        logger.info(f"Using User Agent: {user_agent}")
-        
-        # Proxy configuration
-        proxy = self.get_random_proxy()
-        if proxy:
-            chrome_options.add_argument(f'--proxy-server={proxy}')
-            logger.info(f"Using Proxy: {proxy}")
-        
-        # Additional options for better stealth
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
-        chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-        
-        try:
-            driver = webdriver.Chrome(options=chrome_options)
-            # Execute stealth script
-            driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-            return driver
-        except Exception as e:
-            logger.error(f"Driver setup failed: {e}")
-            raise
+    def setup_driver(self, max_retries=3):
+        """Setup Chrome driver with retry mechanism"""
+        for attempt in range(max_retries):
+            try:
+                chrome_options = Options()
+                
+                # Headless configuration for Render
+                chrome_options.add_argument('--headless=new')
+                chrome_options.add_argument('--no-sandbox')
+                chrome_options.add_argument('--disable-dev-shm-usage')
+                chrome_options.add_argument('--disable-gpu')
+                chrome_options.add_argument('--window-size=1920,1080')
+                chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+                
+                # Random user agent
+                user_agent = self.ua.random
+                chrome_options.add_argument(f'--user-agent={user_agent}')
+                logger.info(f"Using User Agent: {user_agent}")
+                
+                # Proxy configuration with fallback
+                proxies = self.get_reliable_proxies()
+                selected_proxy = random.choice(proxies) if proxies else None
+                
+                if selected_proxy:
+                    chrome_options.add_argument(f'--proxy-server={selected_proxy}')
+                    logger.info(f"Attempt {attempt + 1}: Using Proxy: {selected_proxy}")
+                else:
+                    logger.info(f"Attempt {attempt + 1}: No proxy, using direct connection")
+                
+                # Additional stealth options
+                chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                chrome_options.add_experimental_option('useAutomationExtension', False)
+                
+                # Disable images for faster loading
+                chrome_options.add_argument('--blink-settings=imagesEnabled=false')
+                
+                driver = webdriver.Chrome(options=chrome_options)
+                
+                # Stealth modifications
+                driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+                driver.execute_script("Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3]})")
+                driver.execute_script("Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']})")
+                
+                return driver
+                
+            except Exception as e:
+                logger.error(f"Driver setup attempt {attempt + 1} failed: {e}")
+                if attempt == max_retries - 1:
+                    raise
+                time.sleep(2)
     
     def random_scroll(self, driver, direction="down"):
         """Random scrolling behavior"""
-        scroll_duration = random.uniform(3, 8)
+        scroll_duration = random.uniform(2, 5)  # Reduced duration
         start_time = time.time()
         
         if direction == "down":
-            scroll_amount = random.randint(300, 800)
+            scroll_amount = random.randint(200, 500)
         else:
-            scroll_amount = random.randint(-800, -300)
+            scroll_amount = random.randint(-500, -200)
         
         while time.time() - start_time < scroll_duration:
-            driver.execute_script(f"window.scrollBy(0, {scroll_amount});")
-            time.sleep(random.uniform(0.5, 1.5))
+            try:
+                driver.execute_script(f"window.scrollBy(0, {scroll_amount});")
+                time.sleep(random.uniform(0.3, 1.0))
+            except:
+                break
     
     def find_and_click_post(self, driver):
-        """Find and click a random post"""
+        """Find and click a random post with better selectors"""
         try:
             # Wait for page to load
-            WebDriverWait(driver, 10).until(
+            WebDriverWait(driver, 15).until(
                 EC.presence_of_element_located((By.TAG_NAME, "body"))
             )
             
-            # Look for common post selectors
+            # Common blog post selectors
             post_selectors = [
-                "a[href*='/p/']",  # Instagram style
-                "a[href*='/post/']",  # Common blog style
-                ".post", ".article", ".card",
-                "h1 a", "h2 a", "h3 a",
-                "[class*='post'] a",
-                "[class*='article'] a"
+                "a[href*='.html']",  # Blogspot posts
+                ".post-title a",
+                ".entry-title a", 
+                ".post h2 a",
+                ".blog-posts h2 a",
+                "article h2 a",
+                ".item h2 a",
+                "[class*='post'] h3 a",
+                "a[href*='/p/']",
+                "a[href*='/202']",  # Posts with year in URL
             ]
+            
+            all_posts = []
             
             for selector in post_selectors:
                 try:
                     posts = driver.find_elements(By.CSS_SELECTOR, selector)
-                    if posts:
-                        post = random.choice(posts)
-                        post_url = post.get_attribute('href')
-                        if post_url and 'http' in post_url:
-                            logger.info(f"Clicking post: {post_url}")
-                            driver.execute_script("arguments[0].click();", post)
-                            return True
+                    for post in posts:
+                        try:
+                            href = post.get_attribute('href')
+                            text = post.text.strip()
+                            if href and text and len(text) > 10:  # Filter real posts
+                                all_posts.append(post)
+                        except:
+                            continue
                 except:
                     continue
             
-            # Fallback: click any link that looks like a post
-            all_links = driver.find_elements(By.TAG_NAME, "a")
-            if all_links:
-                link = random.choice(all_links)
-                driver.execute_script("arguments[0].click();", link)
+            if all_posts:
+                post = random.choice(all_posts)
+                post_url = post.get_attribute('href')
+                logger.info(f"Clicking post: {post.text[:50]}... - {post_url}")
+                
+                # Scroll to post first
+                driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", post)
+                time.sleep(1)
+                
+                # Click using JavaScript
+                driver.execute_script("arguments[0].click();", post)
                 return True
                 
         except Exception as e:
@@ -145,66 +201,67 @@ class TrafficAutomation:
         return False
     
     def run_automation(self, url, session_id):
-        """Main automation loop"""
+        """Main automation loop with better error handling"""
         driver = None
         try:
             logger.info(f"Starting automation for: {url}")
             
-            # Setup driver with proxy and user agent
+            # Setup driver with retry
             driver = self.setup_driver()
             
-            # Step 1: Check for data leaks
+            # Step 1: Check for data leaks (optional)
             logger.info("Checking for data leaks...")
-            if not self.check_ip_leak(driver):
-                logger.warning("Potential data leak detected")
-                # Continue anyway for demo purposes
+            self.check_ip_leak(driver)
             
-            # Step 2: Open target URL
+            # Step 2: Open target URL with timeout
             logger.info(f"Opening URL: {url}")
+            driver.set_page_load_timeout(30)
             driver.get(url)
-            time.sleep(random.uniform(5, 10))
+            time.sleep(random.uniform(3, 6))
             
-            max_iterations = 3  # Limit iterations for demo
+            max_iterations = 2  # Reduced for stability
             
             for iteration in range(max_iterations):
                 logger.info(f"Starting iteration {iteration + 1}")
                 
-                # Step 3: Scroll down with random duration
+                # Step 3: Scroll down
                 logger.info("Scrolling down...")
                 self.random_scroll(driver, "down")
-                time.sleep(random.uniform(2, 4))
+                time.sleep(random.uniform(1, 3))
                 
-                # Step 4: Scroll up with random duration
+                # Step 4: Scroll up
                 logger.info("Scrolling up...")
                 self.random_scroll(driver, "up")
-                time.sleep(random.uniform(2, 4))
+                time.sleep(random.uniform(1, 3))
                 
                 # Step 5: Click random post
                 logger.info("Looking for posts to click...")
-                if self.find_and_click_post(driver):
-                    time.sleep(random.uniform(5, 10))
+                post_clicked = self.find_and_click_post(driver)
+                
+                if post_clicked:
+                    time.sleep(random.uniform(4, 8))
                     
-                    # Step 6: Scroll on post page
+                    # Scroll on post page
                     logger.info("Scrolling on post page...")
                     self.random_scroll(driver, "down")
-                    time.sleep(random.uniform(2, 4))
+                    time.sleep(1)
                     
                     self.random_scroll(driver, "up")
-                    time.sleep(random.uniform(2, 4))
+                    time.sleep(1)
                     
                     self.random_scroll(driver, "down")
-                    time.sleep(random.uniform(2, 4))
+                    time.sleep(1)
                     
-                    # Step 7: Go back to home
+                    # Go back to home
                     logger.info("Returning to home...")
-                    driver.back()
-                    time.sleep(random.uniform(5, 8))
+                    driver.execute_script("window.history.go(-1)")
+                    time.sleep(random.uniform(3, 6))
                 else:
-                    logger.warning("No posts found to click")
+                    logger.warning("No posts found to click, continuing...")
                 
                 # Random delay between iterations
                 if iteration < max_iterations - 1:
-                    delay = random.uniform(10, 20)
+                    delay = random.uniform(8, 15)
                     logger.info(f"Waiting {delay:.1f} seconds before next iteration")
                     time.sleep(delay)
             
@@ -215,4 +272,7 @@ class TrafficAutomation:
             raise
         finally:
             if driver:
-                driver.quit()
+                try:
+                    driver.quit()
+                except:
+                    pass
