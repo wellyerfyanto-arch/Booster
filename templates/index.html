@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Traffic Automation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Web Traffic Automation</h1>
+        
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <form id="trafficForm" class="space-y-4">
+                <div>
+                    <label for="url" class="block text-sm font-medium text-gray-700">Target URL</label>
+                    <input type="url" id="url" name="url" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="https://example.com">
+                </div>
+                
+                <div>
+                    <label for="sessionId" class="block text-sm font-medium text-gray-700">Session ID (optional)</label>
+                    <input type="text" id="sessionId" name="sessionId"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="default">
+                </div>
+                
+                <button type="submit"
+                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Start Traffic Automation
+                </button>
+            </form>
+            
+            <div id="status" class="mt-6 hidden">
+                <h3 class="text-lg font-medium text-gray-900">Session Status</h3>
+                <div class="mt-2 p-4 bg-gray-50 rounded-md">
+                    <pre id="statusContent" class="text-sm"></pre>
+                </div>
+            </div>
+            
+            <div id="error" class="mt-4 hidden">
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    <span id="errorMessage"></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="max-w-2xl mx-auto mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Features</h2>
+            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                <li>✅ Automatic proxy rotation each session</li>
+                <li>✅ Automatic user agent rotation</li>
+                <li>✅ Data leak detection</li>
+                <li>✅ Smart scrolling behavior</li>
+                <li>✅ Post selection and interaction</li>
+                <li>✅ Multiple iterations</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('trafficForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = document.getElementById('url').value;
+            const sessionId = document.getElementById('sessionId').value || 'default';
+            
+            try {
+                const response = await fetch('/start_traffic', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        session_id: sessionId
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('error').classList.add('hidden');
+                    document.getElementById('status').classList.remove('hidden');
+                    document.getElementById('statusContent').textContent = 
+                        `Session started: ${sessionId}\nURL: ${url}\nStatus: Running...`;
+                    
+                    // Poll for status updates
+                    pollStatus(sessionId);
+                } else {
+                    showError(data.error);
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            }
+        });
+        
+        async function pollStatus(sessionId) {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/status/${sessionId}`);
+                    if (response.ok) {
+                        const status = await response.json();
+                        document.getElementById('statusContent').textContent = 
+                            JSON.stringify(status, null, 2);
+                        
+                        if (status.status && 
+                           (status.status.includes('completed') || 
+                            status.status.includes('error'))) {
+                            clearInterval(interval);
+                        }
+                    } else {
+                        clearInterval(interval);
+                        document.getElementById('statusContent').textContent += 
+                            '\nSession ended or not found';
+                    }
+                } catch (error) {
+                    console.error('Status polling error:', error);
+                }
+            }, 2000);
+        }
+        
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('error').classList.remove('hidden');
+        }
+    </script>
+</body>
+  </html>
