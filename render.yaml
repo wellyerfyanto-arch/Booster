@@ -7,3 +7,11 @@ services:
     envVars:
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: WEBSHARE_API_KEY
+        value: your_webshare_api_key_here
+      - key: IPROYAL_USERNAME
+        value: your_iproyal_username
+      - key: IPROYAL_PASSWORD
+        value: your_iproyal_password
+      - key: SCRAPINGANT_API_KEY
+        value: your_scrapingant_api_key
