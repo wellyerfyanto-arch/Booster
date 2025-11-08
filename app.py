@@ -7,7 +7,13 @@ import logging
 from datetime import datetime
 import json
 import re
-
+# Untuk production di Render
+import os
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    # Debug mode hanya di local
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
