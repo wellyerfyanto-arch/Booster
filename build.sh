@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Build script untuk Render
 
-echo "Installing Python dependencies..."
+echo "=== Installing Python Dependencies ==="
 pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "Installing Playwright browsers..."
+echo "=== Installing Playwright Browser ==="
 python -m playwright install chromium
-python -m playwright install-deps
 
-echo "Creating necessary directories..."
+echo "=== Creating Directories ==="
 mkdir -p logs
 mkdir -p chrome_profiles
 
-echo "Checking gunicorn installation..."
-python -c "import gunicorn; print('Gunicorn version:', gunicorn.__version__)"
+echo "=== Verification ==="
+python -c "import flask; print('✓ Flask installed')"
+python -c "import playwright; print('✓ Playwright installed')"
+python -c "import gunicorn; print('✓ Gunicorn installed')"
 
-echo "Build completed successfully!"
+echo "=== Build Completed Successfully ==="
