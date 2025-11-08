@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traffic Automation Dashboard</title>
+    <title>Real Browser Automation</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
@@ -22,13 +22,13 @@
             max-width: 1200px;
             margin: 0 auto;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             overflow: hidden;
         }
         
         .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            background: #2c3e50;
             color: white;
             padding: 30px;
             text-align: center;
@@ -39,15 +39,10 @@
             margin-bottom: 10px;
         }
         
-        .header p {
-            opacity: 0.9;
-            font-size: 1.1em;
-        }
-        
         .content {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            gap: 20px;
             padding: 30px;
         }
         
@@ -57,11 +52,11 @@
             }
         }
         
-        .form-section, .monitor-section {
+        .panel {
             background: #f8f9fa;
             padding: 25px;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
         }
         
         .form-group {
@@ -71,20 +66,19 @@
         label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
+            font-weight: bold;
             color: #2c3e50;
         }
         
-        input, select, textarea {
+        input, select {
             width: 100%;
             padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
         }
         
-        input:focus, select:focus, textarea:focus {
+        input:focus, select:focus {
             outline: none;
             border-color: #3498db;
         }
@@ -93,6 +87,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            margin: 15px 0;
         }
         
         .checkbox-group input {
@@ -100,43 +95,51 @@
         }
         
         .btn {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            background: #3498db;
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
+            padding: 15px;
+            border-radius: 6px;
             font-size: 16px;
-            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
             width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s;
         }
         
         .btn:hover {
+            background: #2980b9;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
         }
         
         .btn-stop {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            background: #e74c3c;
         }
         
-        .btn-clear {
-            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        .btn-stop:hover {
+            background: #c0392b;
         }
         
-        .session-info {
+        .btn-success {
+            background: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background: #219a52;
+        }
+        
+        .session-card {
             background: white;
-            border-radius: 8px;
-            padding: 20px;
+            padding: 15px;
+            border-radius: 6px;
             margin-bottom: 15px;
             border-left: 4px solid #3498db;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         
         .session-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
         }
@@ -144,11 +147,12 @@
         .session-id {
             font-weight: bold;
             color: #2c3e50;
+            font-family: monospace;
         }
         
         .session-status {
-            padding: 4px 12px;
-            border-radius: 20px;
+            padding: 4px 8px;
+            border-radius: 12px;
             font-size: 12px;
             font-weight: bold;
         }
@@ -160,11 +164,11 @@
         
         .progress-bar {
             width: 100%;
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
-            overflow: hidden;
+            height: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
             margin: 10px 0;
+            overflow: hidden;
         }
         
         .progress-fill {
@@ -177,24 +181,18 @@
             background: #1e1e1e;
             color: #00ff00;
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 6px;
             font-family: 'Courier New', monospace;
             font-size: 12px;
             height: 300px;
             overflow-y: auto;
             margin-top: 15px;
-        }
-        
-        .control-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 20px;
+            line-height: 1.4;
         }
         
         .stats {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr 1fr;
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -202,7 +200,7 @@
         .stat-card {
             background: white;
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 6px;
             text-align: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
@@ -213,180 +211,109 @@
             color: #3498db;
         }
         
-        .stat-label {
-            font-size: 0.9em;
-            color: #7f8c8d;
+        .info-badge {
+            background: #3498db;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚗 Traffic Automation Dashboard</h1>
-            <p>Advanced web traffic simulation with multiple Chrome profiles</p>
+            <h1>🌐 Real Browser Automation</h1>
+            <p>Actual Chrome Browser Automation with Playwright</p>
         </div>
         
         <div class="content">
-            <!-- Left Column: Configuration Form -->
-            <div class="form-section">
-                <h2>⚙️ Automation Configuration</h2>
+            <!-- Configuration Panel -->
+            <div class="panel">
+                <h2>⚙️ Configuration</h2>
+                <div class="info-badge">
+                    🚀 REAL Chrome Browser Automation
+                </div>
                 
                 <form id="trafficForm">
-                    <!-- Basic Settings -->
                     <div class="form-group">
                         <label for="url">Target URL:</label>
                         <input type="url" id="url" name="url" required 
-                               placeholder="https://example.com">
+                               placeholder="https://example.com" value="https://google.com">
                     </div>
                     
                     <div class="form-group">
-                        <label for="num_profiles">Number of Chrome Profiles:</label>
+                        <label for="num_profiles">Number of Browser Profiles:</label>
                         <input type="number" id="num_profiles" name="num_profiles" 
-                               value="1" min="1" max="50" required>
+                               value="2" min="1" max="5" required>
+                        <small>Each profile opens real Chrome browser</small>
                     </div>
                     
-                    <!-- Device Type -->
                     <div class="form-group">
                         <label for="user_agent_type">Device Type:</label>
                         <select id="user_agent_type" name="user_agent_type">
                             <option value="desktop">Desktop</option>
-                            <option value="mobile">Mobile/Phone</option>
+                            <option value="mobile">Mobile</option>
                         </select>
                     </div>
                     
-                    <!-- Visit Duration -->
                     <div class="form-group">
                         <label for="visit_duration">Visit Duration (seconds):</label>
                         <input type="number" id="visit_duration" name="visit_duration" 
-                               value="30" min="5" max="3600" required>
+                               value="45" min="10" max="180" required>
                     </div>
                     
-                    <!-- Proxy Settings -->
-                    <div class="form-group">
-                        <label for="proxy_type">Proxy Type:</label>
-                        <select id="proxy_type" name="proxy_type">
-                            <option value="none">No Proxy</option>
-                            <option value="premium">Premium Proxy</option>
-                            <option value="manual">Manual Proxy</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Premium Proxy Settings -->
-                    <div id="premium_proxy_settings" style="display: none;">
-                        <div class="form-group">
-                            <label for="premium_proxy_service">Premium Proxy Service:</label>
-                            <select id="premium_proxy_service" name="premium_proxy_service">
-                                <option value="oxylabs">Oxylabs</option>
-                                <option value="smartproxy">Smartproxy</option>
-                                <option value="brightdata">Bright Data</option>
-                                <option value="netnut">NetNut</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="premium_proxy_username">Proxy Username:</label>
-                            <input type="text" id="premium_proxy_username" name="premium_proxy_username">
-                        </div>
-                        <div class="form-group">
-                            <label for="premium_proxy_password">Proxy Password:</label>
-                            <input type="password" id="premium_proxy_password" name="premium_proxy_password">
-                        </div>
-                    </div>
-                    
-                    <!-- Manual Proxy Settings -->
-                    <div id="manual_proxy_settings" style="display: none;">
-                        <div class="form-group">
-                            <label for="manual_proxies">Manual Proxies (one per line):</label>
-                            <textarea id="manual_proxies" name="manual_proxies" rows="5" 
-                                      placeholder="Format examples:&#10;192.168.1.1:8080&#10;user:pass@192.168.1.2:8080&#10;http://user:pass@192.168.1.3:8080"></textarea>
-                            <small>Ensure number of proxies ≥ number of Chrome profiles</small>
-                        </div>
-                    </div>
-                    
-                    <!-- Google Login -->
-                    <div class="form-group checkbox-group">
-                        <input type="checkbox" id="login_google" name="login_google">
-                        <label for="login_google">Google Login (Optional)</label>
-                    </div>
-                    
-                    <div id="google_credentials" style="display: none;">
-                        <div class="form-group">
-                            <label for="google_email">Google Email:</label>
-                            <input type="email" id="google_email" name="google_email">
-                        </div>
-                        <div class="form-group">
-                            <label for="google_password">Google Password:</label>
-                            <input type="password" id="google_password" name="google_password">
-                        </div>
-                    </div>
-                    
-                    <!-- Additional Options -->
-                    <div class="form-group checkbox-group">
+                    <div class="checkbox-group">
                         <input type="checkbox" id="click_ads" name="click_ads">
-                        <label for="click_ads">Click Google Ads</label>
+                        <label for="click_ads">Try to click Google Ads</label>
                     </div>
                     
-                    <button type="submit" class="btn">🚀 Start Traffic Automation</button>
+                    <button type="submit" class="btn btn-success">🚀 Start Real Browser Automation</button>
                 </form>
                 
-                <!-- Control Buttons -->
-                <div class="control-buttons">
-                    <button class="btn btn-stop" onclick="stopAllSessions()">🛑 Stop All Sessions</button>
-                    <button class="btn btn-clear" onclick="clearCompletedSessions()">🧹 Clear Completed</button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-stop" onclick="stopAllSessions()">🛑 Stop All</button>
+                    <button class="btn" onclick="clearCompletedSessions()">🧹 Clear Completed</button>
                 </div>
             </div>
             
-            <!-- Right Column: Monitoring -->
-            <div class="monitor-section">
-                <h2>📊 Real-time Monitoring</h2>
+            <!-- Monitoring Panel -->
+            <div class="panel">
+                <h2>📊 Live Monitoring</h2>
                 
-                <!-- Statistics -->
-                <div class="stats" id="statsContainer">
-                    <!-- Stats will be populated by JavaScript -->
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="activeCount">0</div>
+                        <div>Active Sessions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="profilesCount">0</div>
+                        <div>Profiles Completed</div>
+                    </div>
                 </div>
                 
-                <!-- Active Sessions -->
                 <h3>Active Sessions</h3>
                 <div id="sessionsContainer">
-                    <!-- Sessions will be populated by JavaScript -->
+                    <p>No active sessions</p>
                 </div>
                 
-                <!-- Logs -->
-                <h3>Live Logs</h3>
+                <h3>Real-time Logs</h3>
                 <div class="logs" id="liveLogs">
-                    System ready. Start a session to see logs...
+                    🔧 System ready for real browser automation...
+                    \n📝 Start a session to see live browser actions
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // DOM Elements
-        const trafficForm = document.getElementById('trafficForm');
-        const sessionsContainer = document.getElementById('sessionsContainer');
-        const liveLogs = document.getElementById('liveLogs');
-        const statsContainer = document.getElementById('statsContainer');
-        
-        // State
+        // Global variables
         let currentSessionId = null;
         let refreshInterval = null;
         
-        // Event Listeners for dynamic form sections
-        document.getElementById('proxy_type').addEventListener('change', function() {
-            const proxyType = this.value;
-            document.getElementById('premium_proxy_settings').style.display = 
-                proxyType === 'premium' ? 'block' : 'none';
-            document.getElementById('manual_proxy_settings').style.display = 
-                proxyType === 'manual' ? 'block' : 'none';
-        });
-        
-        document.getElementById('login_google').addEventListener('change', function() {
-            document.getElementById('google_credentials').style.display = 
-                this.checked ? 'block' : 'none';
-        });
-        
-        // Form Submission
-        trafficForm.addEventListener('submit', async function(e) {
+        // Form submission
+        document.getElementById('trafficForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const formData = new FormData(this);
@@ -395,24 +322,8 @@
                 num_profiles: parseInt(formData.get('num_profiles')),
                 user_agent_type: formData.get('user_agent_type'),
                 visit_duration: parseInt(formData.get('visit_duration')),
-                proxy_type: formData.get('proxy_type'),
-                login_google: formData.get('login_google') === 'on',
                 click_ads: formData.get('click_ads') === 'on'
             };
-            
-            // Add conditional fields
-            if (data.login_google) {
-                data.google_email = formData.get('google_email');
-                data.google_password = formData.get('google_password');
-            }
-            
-            if (data.proxy_type === 'premium') {
-                data.premium_proxy_service = formData.get('premium_proxy_service');
-                data.premium_proxy_username = formData.get('premium_proxy_username');
-                data.premium_proxy_password = formData.get('premium_proxy_password');
-            } else if (data.proxy_type === 'manual') {
-                data.manual_proxies = formData.get('manual_proxies');
-            }
             
             try {
                 const response = await fetch('/start_traffic', {
@@ -426,18 +337,18 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    alert('Traffic automation started successfully!');
+                    alert('🎉 Real browser automation started!\n\nEach profile will open real Chrome browser.');
                     currentSessionId = result.session_id;
                     startMonitoring();
                 } else {
-                    alert('Error: ' + result.error);
+                    alert('❌ Error: ' + result.error);
                 }
             } catch (error) {
-                alert('Error starting traffic automation: ' + error.message);
+                alert('💥 Error: ' + error.message);
             }
         });
         
-        // Monitoring Functions
+        // Start monitoring
         function startMonitoring() {
             if (refreshInterval) {
                 clearInterval(refreshInterval);
@@ -446,17 +357,22 @@
             updateMonitoring();
         }
         
+        // Update monitoring data
         async function updateMonitoring() {
             try {
                 // Update stats
                 const statsResponse = await fetch('/monitor');
-                const statsData = await statsResponse.json();
-                updateStats(statsData);
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    updateStats(statsData);
+                }
                 
                 // Update sessions
                 const sessionsResponse = await fetch('/sessions');
-                const sessionsData = await sessionsResponse.json();
-                updateSessions(sessionsData);
+                if (sessionsResponse.ok) {
+                    const sessionsData = await sessionsResponse.json();
+                    updateSessions(sessionsData);
+                }
                 
                 // Update logs for current session
                 if (currentSessionId) {
@@ -468,67 +384,61 @@
                 }
             } catch (error) {
                 console.error('Monitoring error:', error);
+                document.getElementById('liveLogs').textContent = '🔌 Error connecting to server...';
             }
         }
         
+        // Update statistics
         function updateStats(data) {
-            const stats = data.summary;
-            statsContainer.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-number">${stats.active_sessions}</div>
-                    <div class="stat-label">Active</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${stats.completed_sessions}</div>
-                    <div class="stat-label">Completed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${stats.total_sessions}</div>
-                    <div class="stat-label">Total</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${stats.total_iterations}</div>
-                    <div class="stat-label">Iterations</div>
-                </div>
-            `;
+            document.getElementById('activeCount').textContent = data.summary.active_sessions;
+            document.getElementById('profilesCount').textContent = data.summary.total_profiles_completed;
         }
         
+        // Update sessions display
         function updateSessions(data) {
+            const container = document.getElementById('sessionsContainer');
             const sessions = data.active_sessions;
-            if (Object.keys(sessions).length === 0) {
-                sessionsContainer.innerHTML = '<p>No active sessions</p>';
+            
+            if (!sessions || Object.keys(sessions).length === 0) {
+                container.innerHTML = '<p>No active sessions</p>';
                 return;
             }
             
-            sessionsContainer.innerHTML = '';
+            container.innerHTML = '';
+            
             for (const [sessionId, session] of Object.entries(sessions)) {
-                const progress = session.iterations_completed / session.parameters.num_profiles * 100;
-                const statusClass = `session-status status-${session.status.split(':')[0]}`;
+                const progress = session.progress || 0;
+                const status = session.status || 'unknown';
+                const statusClass = `session-status status-${status.split(':')[0]}`;
                 
-                sessionsContainer.innerHTML += `
-                    <div class="session-info">
+                const sessionHTML = `
+                    <div class="session-card">
                         <div class="session-header">
                             <span class="session-id">${sessionId}</span>
-                            <span class="${statusClass}">${session.status}</span>
+                            <span class="${statusClass}">${status}</span>
                         </div>
                         <p><strong>URL:</strong> ${session.url}</p>
-                        <p><strong>Profiles:</strong> ${session.parameters.num_profiles}</p>
-                        <p><strong>Progress:</strong> ${session.iterations_completed}/${session.parameters.num_profiles} profiles</p>
+                        <p><strong>Progress:</strong> ${session.completed_profiles || 0}/${session.num_profiles} browsers</p>
+                        <p><strong>Type:</strong> ${session.user_agent_type} | ${session.visit_duration}s</p>
                         <div class="progress-bar">
                             <div class="progress-fill" style="width: ${progress}%"></div>
                         </div>
-                        <button onclick="stopSession('${sessionId}')" class="btn btn-stop">Stop</button>
+                        <button class="btn btn-stop" onclick="stopSession('${sessionId}')">Stop Browser</button>
                     </div>
                 `;
+                
+                container.innerHTML += sessionHTML;
             }
         }
         
+        // Update logs display
         function updateLogs(logs) {
-            liveLogs.textContent = logs;
-            liveLogs.scrollTop = liveLogs.scrollHeight;
+            const logsElement = document.getElementById('liveLogs');
+            logsElement.textContent = logs || 'No logs available';
+            logsElement.scrollTop = logsElement.scrollHeight;
         }
         
-        // Control Functions
+        // Stop a specific session
         async function stopSession(sessionId) {
             try {
                 const response = await fetch(`/stop_traffic/${sessionId}`, {
@@ -536,30 +446,36 @@
                 });
                 
                 if (response.ok) {
-                    alert('Session stopped successfully');
+                    alert('🛑 Browser session stopped');
                     updateMonitoring();
                 } else {
-                    alert('Error stopping session');
+                    alert('❌ Error stopping session');
                 }
             } catch (error) {
-                alert('Error: ' + error.message);
+                alert('💥 Error: ' + error.message);
             }
         }
         
+        // Stop all sessions
         async function stopAllSessions() {
-            if (confirm('Stop all active sessions?')) {
-                const sessionsResponse = await fetch('/sessions');
-                const sessionsData = await sessionsResponse.json();
-                
-                for (const sessionId of Object.keys(sessionsData.active_sessions)) {
-                    await fetch(`/stop_traffic/${sessionId}`, { method: 'POST' });
+            if (confirm('Stop all browser sessions?')) {
+                try {
+                    const sessionsResponse = await fetch('/sessions');
+                    const sessionsData = await sessionsResponse.json();
+                    
+                    for (const sessionId of Object.keys(sessionsData.active_sessions || {})) {
+                        await fetch(`/stop_traffic/${sessionId}`, { method: 'POST' });
+                    }
+                    
+                    alert('🛑 All browser sessions stopped');
+                    updateMonitoring();
+                } catch (error) {
+                    alert('💥 Error: ' + error.message);
                 }
-                
-                alert('All sessions stopped');
-                updateMonitoring();
             }
         }
         
+        // Clear completed sessions
         async function clearCompletedSessions() {
             try {
                 const response = await fetch('/clear_completed', {
@@ -567,17 +483,17 @@
                 });
                 
                 const result = await response.json();
-                alert(`Cleared ${result.cleared_sessions.length} completed sessions`);
+                alert(`🧹 Cleared ${result.cleared_sessions.length} completed sessions`);
                 updateMonitoring();
             } catch (error) {
-                alert('Error: ' + error.message);
+                alert('💥 Error: ' + error.message);
             }
         }
         
-        // Initialize
+        // Start monitoring when page loads
         document.addEventListener('DOMContentLoaded', function() {
             startMonitoring();
         });
     </script>
 </body>
-</html>
+    </html>
