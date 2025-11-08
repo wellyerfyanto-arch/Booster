@@ -1,0 +1,11 @@
+[build]
+builder = "nixpacks"
+buildCommand = "chmod +x build.sh && ./build.sh"
+
+[deploy]
+startCommand = "chmod +x start.sh && ./start.sh"
+restartPolicyType = "on_failure"
+
+[[services]]
+name = "web"
+sourcePath = ""
