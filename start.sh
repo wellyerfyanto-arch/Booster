@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 echo "=== Starting Traffic Automation ==="
-echo "PORT: $PORT"
+echo "Using PORT: $PORT"
 
-# Use Python module to run gunicorn
 python -m gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120 app:app
